@@ -1,0 +1,10 @@
+# Pfad zum speichern: /etc/systemd/system/lampel.service
+[Unit]
+Description=ServiceUnit zum starten der Lüftungsampel
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/Fenster_Lueftungsampel/lampel.py
+
+[Install]
+WantedBy=multi-user.target

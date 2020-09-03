@@ -1,0 +1,66 @@
+# vorlage_cfg.toml umbennen in cfg.toml
+[weewx]
+db = "sqlite"  #  "mysql" | "sqlite"
+
+    [weewx.mysql]
+    database = "<datenbankname>"
+    user = "<username>"
+    password = "<password>"
+    host= "localhost"
+
+    [weewx.sqlite]
+    database = ":memory:"  # Path to database file or :memory:
+
+
+[led]
+    #BCM Nummern!
+    [led.1.pincfg]
+    r = 1
+    g = 2
+    b = 3
+
+    [led.2.pincfg]
+    r = 4
+    g = 5
+    b = 6
+
+    # Farbdefinition 0-1
+    [led.1.farben]
+    ok = [0, 1, 0]
+    warnung = [0, 0, 1]
+    kritisch = [1, 0, 0]
+
+    [led.2.farben]
+    ok = [0, 1, 0]
+    warnung = [0, 0, 1]
+    kritisch = [1, 0, 0]
+
+    [led.mapping]
+    # Eintragen der Zuständigen RGB LED
+    temp_anzeige = 1
+    feuchte_anzeige = 2
+
+
+[spaltenname]
+# Eintragen der zu vergleichenden WeeWx Archive Spaltennamen
+temp_innen = "in_temp"
+temp_aussen = "in_humidity"
+feuchte_innen = "out_temp"
+feuchte_aussen = "out_humidity"
+
+[differenz]
+    [temp]
+    ok = -0.5  # bis
+    warnung = 0.5
+    hysterese = 0.2 # Zählt nur nach unten
+
+    [feuchte]
+    ok = -0.5 # bis
+    warnung = 0.5
+    hysterese = 0.2 # Zählt nur nach unten
+
+
+
+
+
+
