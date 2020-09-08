@@ -19,11 +19,12 @@ CONFIG = config_laden()
 class Ampel:
     def __init__(self, rgbled, differenz_ok, differenz_warnung, hysterese, farben):
         self.rgbled = rgbled
-        self.status = None
+        self.status = 0
         self.differenz_ok = differenz_ok
         self.differenz_warnung = differenz_warnung
         self.hysterese = hysterese
         self.farben = farben
+        self.start_test()
 
     def set_status(self, differenz):
         status = self.status_ermitteln(differenz)
@@ -48,6 +49,13 @@ class Ampel:
         else:
             status = 2
         return status
+
+    def start_test(self):
+        for status in range(3):
+            self.status = status
+            self._set_rgbled()
+            time.sleep(2)
+        self.status = 0
 
 
 def temp_mapping(name):
