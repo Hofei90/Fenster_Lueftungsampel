@@ -147,7 +147,7 @@ def main():
                           farben_initialisieren(CONFIG["led"]["mapping"]["feuchte_anzeige"]))
     while True:
         now = datetime.datetime.now()
-        if (now.min - 1) % 5 == 0:
+        if (int(now.strftime("%M")) - 1) % 5 == 0:
             temp_ampel.set_status(temp_differenz())
             feuchte_ampel.set_status(feuchte_differenz())
         time.sleep(25)
@@ -155,3 +155,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

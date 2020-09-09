@@ -37,8 +37,8 @@ db = "sqlite"  #  "mysql" | "sqlite"
 
     [led.mapping]
     # Eintragen der Zuständigen RGB LED
-    temp_anzeige = 1
-    feuchte_anzeige = 2
+    temp_anzeige = "1"
+    feuchte_anzeige = "2"
 
 
 [spaltenname]
@@ -49,15 +49,16 @@ feuchte_innen = "out_temp"
 feuchte_aussen = "out_humidity"
 
 [differenz]
-    [temp]
+    [differenz.temp]
     ok = -0.5  # bis
     warnung = 0.5
     hysterese = 0.2 # Zählt nur nach unten
 
-    [feuchte]
+    [differenz.feuchte]
     ok = -0.5 # bis
     warnung = 0.5
     hysterese = 0.2 # Zählt nur nach unten
+
 
 
 
