@@ -25,7 +25,7 @@ class Ampel:
         self.hysterese = hysterese
         self.farben = farben
         self.start_test()
-
+        
     def set_status(self, differenz):
         status = self.status_ermitteln(differenz)
         if status < self.status:
@@ -124,8 +124,8 @@ def temp_differenz():
 
 
 def feuchte_differenz():
-    aussen = temp_auslesen(CONFIG["spaltenname"]["feuchte_aussen"])
-    innen = temp_auslesen(CONFIG["spaltenname"]["feuchte_innen"])
+    aussen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_aussen"])
+    innen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_innen"])
     differenz = differenz_berechnen(aussen, innen)
     return differenz
 
@@ -155,4 +155,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
