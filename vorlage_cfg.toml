@@ -26,14 +26,14 @@ db = "sqlite"  #  "mysql" | "sqlite"
 
     # Farbdefinition 0-1
     [led.1.farben]
-    ok = [0, 1, 0]
-    warnung = [0, 0, 1]
-    kritisch = [1, 0, 0]
+    ok = [0.0, 1.0, 0.0]
+    warnung = [0.0, 0.0, 1.0]
+    kritisch = [1.0, 0.0, 0.0]
 
     [led.2.farben]
-    ok = [0, 1, 0]
-    warnung = [0, 0, 1]
-    kritisch = [1, 0, 0]
+    ok = [0.0, 1.0, 0.0]
+    warnung = [0.0, 0.0, 1.0]
+    kritisch = [1.0, 0.0, 0.0]
 
     [led.mapping]
     # Eintragen der Zuständigen RGB LED
@@ -44,8 +44,8 @@ db = "sqlite"  #  "mysql" | "sqlite"
 [spaltenname]
 # Eintragen der zu vergleichenden WeeWx Archive Spaltennamen
 temp_innen = "in_temp"
-temp_aussen = "in_humidity"
-feuchte_innen = "out_temp"
+temp_aussen = "out_temp"
+feuchte_innen = "in_humidity"
 feuchte_aussen = "out_humidity"
 
 [differenz]

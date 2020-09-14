@@ -1,9 +1,12 @@
-import os
-import toml
 import datetime
-import gpiozero
-import weewx_db_model as db
+import os
+import sys
 import time
+
+import gpiozero
+import toml
+
+import weewx_db_model as db
 
 
 def config_laden():
@@ -101,14 +104,18 @@ def farben_initialisieren(led_nr):
 
 def temp_auslesen(spalte):
     temp = db.Archive.select(temp_mapping(spalte))\
-        .order_by(db.Archive.date_time.desc()).limit(1).execute()[0]
+        .order_by(db.Archive.date_time.desc()).limit(1).scalar()
     return temp
 
 
 def feuchte_auslesen(spalte):
     feuchte = db.Archive.select(feuchte_mapping(spalte))\
-        .order_by(db.Archive.date_time.desc()).limit(1).execute()[0]
+        .order_by(db.Archive.date_time.desc()).limit(1).scalar()
     return feuchte
+
+
+def sim_daten_schreiben(datadict):
+    db.Archive.create(**datadict)
 
 
 def differenz_berechnen(aussen, innen):
@@ -130,9 +137,44 @@ def feuchte_differenz():
     return differenz
 
 
+def wert_eingabe(text):
+    value = 0
+    format_falsch = True
+    while format_falsch:
+        try:
+            value = float(input(f"Bitte {text} eingeben: "))
+        except ValueError:
+            print("Falsches Format")
+        else:
+            format_falsch = False
+    return value
+
+
+def sim_daten_eingabe():
+    daten_dict = {
+        CONFIG["spaltenname"]["temp_innen"]: wert_eingabe("Temperatur innen"),
+        CONFIG["spaltenname"]["temp_aussen"]: wert_eingabe("Temperatur außen"),
+        CONFIG["spaltenname"]["feuchte_innen"]: wert_eingabe("Luftfeuchtigkeit innen"),
+        CONFIG["spaltenname"]["feuchte_aussen"]: wert_eingabe("Luftfeuchtigkeit außen"),
+        "date_time": datetime.datetime.now().timestamp(),
+        "interval": 1,
+        "us_units": 1}
+    return daten_dict
+
+
 def main():
-    db_adapter = CONFIG["weewx"]["db"]
-    db_ = db.init_db(CONFIG["weewx"][db_adapter]["database"], db_adapter, CONFIG["weewx"].get(db_adapter))
+    try:
+        if sys.argv[1] == "-s":
+            simulationsmodus = True
+        else:
+            simulationsmodus = False
+    except IndexError:
+        simulationsmodus = False
+    if not simulationsmodus:
+        db_adapter = CONFIG["weewx"]["db"]
+        db_ = db.init_db(CONFIG["weewx"][db_adapter]["database"], db_adapter, CONFIG["weewx"].get(db_adapter))
+    else:
+        db_ = db.SqliteDatabase(":memory:")
     db.database.initialize(db_)
 
     temp_ampel = Ampel(rgb_initialisieren(CONFIG["led"]["mapping"]["temp_anzeige"]),
@@ -145,12 +187,19 @@ def main():
                           CONFIG["differenz"]["feuchte"]["warnung"],
                           CONFIG["differenz"]["feuchte"]["hysterese"],
                           farben_initialisieren(CONFIG["led"]["mapping"]["feuchte_anzeige"]))
-    while True:
-        now = datetime.datetime.now()
-        if (int(now.strftime("%M")) - 1) % 5 == 0:
+    if not simulationsmodus:
+        while True:
+            now = datetime.datetime.now()
+            if (int(now.strftime("%M")) - 1) % 5 == 0:
+                temp_ampel.set_status(temp_differenz())
+                feuchte_ampel.set_status(feuchte_differenz())
+            time.sleep(25)
+    else:
+        while True:
+            db.database.create_tables([db.Archive])
+            sim_daten_schreiben(sim_daten_eingabe())
             temp_ampel.set_status(temp_differenz())
             feuchte_ampel.set_status(feuchte_differenz())
-        time.sleep(25)
 
 
 if __name__ == "__main__":
