@@ -7,6 +7,7 @@ import gpiozero
 import toml
 
 import weewx_db_model as db
+import setup_logging
 
 
 def config_laden():
@@ -17,6 +18,7 @@ def config_laden():
 
 SKRIPTPFAD = os.path.abspath(os.path.dirname(__file__))
 CONFIG = config_laden()
+LOGGER = setup_logging.create_logger("lampel", CONFIG["loglevel"], SKRIPTPFAD)
 
 
 class Ampel:
@@ -34,15 +36,20 @@ class Ampel:
         if status < self.status:
             status = self.status_ermitteln(differenz, self.hysterese)
         if status != self.status:
+            LOGGER.debug(f"Statusänderung von {self.status} auf {status}")
             self.status = status
+            self._set_rgbled()
 
     def _set_rgbled(self):
         if self.status == 0:
             self.rgbled.color = self.farben["ok"]
+            LOGGER.debug(f"RGB Farbe Ok: {self.rgbled.color}")
         elif self.status == 1:
             self.rgbled.color = self.farben["warnung"]
+            LOGGER.debug(f"RGB Farbe Warnung: {self.rgbled.color}")
         else:
             self.rgbled.color = self.farben["kritisch"]
+            LOGGER.debug(f"RGB Farbe Kritisch: {self.rgbled.color}")
 
     def status_ermitteln(self, differenz, hysterese=0):
         if differenz <= self.differenz_ok - hysterese:
@@ -51,6 +58,7 @@ class Ampel:
             status = 1
         else:
             status = 2
+        LOGGER.debug(f"Status: {status}")
         return status
 
     def start_test(self):
@@ -127,6 +135,7 @@ def temp_differenz():
     aussen = temp_auslesen(CONFIG["spaltenname"]["temp_aussen"])
     innen = temp_auslesen(CONFIG["spaltenname"]["temp_innen"])
     differenz = differenz_berechnen(aussen, innen)
+    LOGGER.debug(f"Temperatur außen: {aussen}; innen: {innen}, Differenz: {differenz}")
     return differenz
 
 
@@ -134,6 +143,7 @@ def feuchte_differenz():
     aussen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_aussen"])
     innen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_innen"])
     differenz = differenz_berechnen(aussen, innen)
+    LOGGER.debug(f"Luftfeuchtigkeit außen: {aussen}; innen: {innen}, Differenz: {differenz}")
     return differenz
 
 

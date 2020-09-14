@@ -1,4 +1,7 @@
 # vorlage_cfg.toml umbennen in cfg.toml
+
+loglevel = 10
+
 [weewx]
 db = "sqlite"  #  "mysql" | "sqlite"
 

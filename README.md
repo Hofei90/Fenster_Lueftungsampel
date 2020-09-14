@@ -1,6 +1,6 @@
 # Fenster_Lueftungsampel
 
-Simulationsmodus zum eingeben von manuellen Temperatur und Feuchtigkeitswerte
+Simulationsmodus zum Eingeben von manuellen Temperatur- und Feuchtigkeitswerten
 mit:
 
 ````python3 lampl.py -s````
