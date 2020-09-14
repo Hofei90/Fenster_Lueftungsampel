@@ -67,6 +67,7 @@ class Ampel:
             self._set_rgbled()
             time.sleep(2)
         self.status = 0
+        self._set_rgbled()
 
 
 def temp_mapping(name):
