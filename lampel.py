@@ -8,6 +8,7 @@ import toml
 
 import weewx_db_model as db
 import setup_logging
+import messwerte_umrechner as mwu
 
 
 def config_laden():
@@ -70,6 +71,22 @@ class Ampel:
         self._set_rgbled()
 
 
+class Messwert:
+    def __init__(self):
+        self.aussen = 0
+        self.innen = 0
+        self.us_unit = 1
+
+    def set_aussen(self, wert):
+        self.aussen = wert
+
+    def set_innen(self, wert):
+        self.innen = wert
+
+    def set_us_unit(self, wert):
+        self.us_unit = wert
+
+
 def temp_mapping(name):
     if name == "extra_temp1":
         spalte = db.Archive.extra_temp1
@@ -111,9 +128,18 @@ def farben_initialisieren(led_nr):
     return CONFIG["led"][led_nr]["farben"]
 
 
-def temp_auslesen(spalte):
+def us_units_auslesen(temp, feuchte):
+    us_units = db.Archive.select(db.Archive.us_units)\
+        .order_by(db.Archive.date_time.desc()).limit(1).scalar()
+    temp.set_us_unit(us_units)
+    feuchte.set_us_unit(us_units)
+
+
+def temp_auslesen(spalte, us_units):
     temp = db.Archive.select(temp_mapping(spalte))\
         .order_by(db.Archive.date_time.desc()).limit(1).scalar()
+    if us_units:
+        temp = mwu.temperaturumrechner(temp)
     return temp
 
 
@@ -132,20 +158,30 @@ def differenz_berechnen(aussen, innen):
     return differenz
 
 
-def temp_differenz():
-    aussen = temp_auslesen(CONFIG["spaltenname"]["temp_aussen"])
-    innen = temp_auslesen(CONFIG["spaltenname"]["temp_innen"])
+def temp_differenz(temp):
+    aussen = temp_auslesen(CONFIG["spaltenname"]["temp_aussen"], temp.us_unit)
+    innen = temp_auslesen(CONFIG["spaltenname"]["temp_innen"], temp.us_unit)
     differenz = differenz_berechnen(aussen, innen)
+    temp.set_aussen(aussen)
+    temp.set_innen(innen)
     LOGGER.debug(f"Temperatur außen: {aussen}; innen: {innen}, Differenz: {differenz}")
     return differenz
 
 
-def feuchte_differenz():
-    aussen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_aussen"])
-    innen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_innen"])
-    differenz = differenz_berechnen(aussen, innen)
-    LOGGER.debug(f"Luftfeuchtigkeit außen: {aussen}; innen: {innen}, Differenz: {differenz}")
-    return differenz
+def feuchte_differenz(temp, feuchte):
+    rel_aussen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_aussen"])
+    rel_innen = feuchte_auslesen(CONFIG["spaltenname"]["feuchte_innen"])
+    feuchte.set_aussen(rel_aussen)
+    feuchte.set_innen(rel_innen)
+
+    abs_aussen = mwu.absolute_luftfeuchtigkeit(temp.aussen, rel_aussen)
+    abs_innen = mwu.absolute_luftfeuchtigkeit(temp.innen, rel_innen)
+
+    abs_differenz = differenz_berechnen(abs_aussen, abs_innen)
+    LOGGER.debug(f"rel. Luftfeuchtigkeit außen: {rel_aussen}; innen: {rel_innen}")
+    LOGGER.debug(f"abs. Luftfeuchtigkeit außen: {abs_aussen}; innen: {abs_innen}, Differenz: {abs_differenz}")
+
+    return abs_differenz
 
 
 def wert_eingabe(text):
@@ -199,18 +235,31 @@ def main():
                           CONFIG["differenz"]["feuchte"]["hysterese"],
                           farben_initialisieren(CONFIG["led"]["mapping"]["feuchte_anzeige"]))
     if not simulationsmodus:
+        exc = False
         while True:
             now = datetime.datetime.now()
             if (int(now.strftime("%M")) - 1) % 5 == 0:
-                temp_ampel.set_status(temp_differenz())
-                feuchte_ampel.set_status(feuchte_differenz())
+                if not exc:
+                    temp = Messwert()
+                    feuchte = Messwert()
+                    us_units_auslesen(temp, feuchte)
+                    temp_ampel.set_status(temp_differenz(temp))
+                    feuchte_ampel.set_status(feuchte_differenz(temp, feuchte))
+                    del temp, feuchte
+                    exc = True
+            else:
+                if exc:
+                    exc = False
             time.sleep(25)
     else:
         while True:
+            temp = Messwert()
+            feuchte = Messwert()
             db.database.create_tables([db.Archive])
             sim_daten_schreiben(sim_daten_eingabe())
-            temp_ampel.set_status(temp_differenz())
-            feuchte_ampel.set_status(feuchte_differenz())
+            us_units_auslesen(temp, feuchte)
+            temp_ampel.set_status(temp_differenz(temp))
+            feuchte_ampel.set_status(feuchte_differenz(temp, feuchte))
 
 
 if __name__ == "__main__":
