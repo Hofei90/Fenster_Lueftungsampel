@@ -44,13 +44,13 @@ class Ampel:
     def _set_rgbled(self):
         if self.status == 0:
             self.rgbled.color = self.farben["ok"]
-            LOGGER.debug(f"RGB Farbe Ok: {self.rgbled.color}")
+            LOGGER.debug(f"RGB Farbe Ok: {self.rgbled.color.rgb}")
         elif self.status == 1:
             self.rgbled.color = self.farben["warnung"]
-            LOGGER.debug(f"RGB Farbe Warnung: {self.rgbled.color}")
+            LOGGER.debug(f"RGB Farbe Warnung: {self.rgbled.color.rgb}")
         else:
             self.rgbled.color = self.farben["kritisch"]
-            LOGGER.debug(f"RGB Farbe Kritisch: {self.rgbled.color}")
+            LOGGER.debug(f"RGB Farbe Kritisch: {self.rgbled.color.rgb}")
 
     def status_ermitteln(self, differenz, hysterese=0):
         if differenz <= self.differenz_ok - hysterese:
