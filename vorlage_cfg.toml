@@ -16,6 +16,11 @@ db = "sqlite"  #  "mysql" | "sqlite"
 
 
 [led]
+
+# Mehrere Auszeiten müssen in eigenen Listen [] innerhalb der Gesamtliste definiert werden wie in der Vorlage.
+# Keine Sekundenangabe! Kein Weglassen der Minuten. Wenn die LEDs 24h aktiv sein sollen [] schreiben
+aus_zeiten = [["18:00", "20:00"], ["8:00", "2:00"]]
+
     #BCM Nummern!
     [led.1.pincfg]
     r = 1

@@ -209,6 +209,23 @@ def sim_daten_eingabe():
     return daten_dict
 
 
+def led_auszeiten_generieren(konfigdaten):
+    aus_zeiten = []
+    for aus_zeit in konfigdaten:
+        h_von, m_von = aus_zeit[0].split(":")
+        h_bis, m_bis = aus_zeit[1].split(":")
+        aus_zeiten.append([datetime.time(int(h_von), int(m_von)), datetime.time(int(h_bis), int(m_bis))])
+    return aus_zeiten
+
+
+def led_auszeiten_pruefen(led_auszeiten, now):
+    for aus_zeit in led_auszeiten:
+        if aus_zeit[0] < now.time() < aus_zeit[1]:
+            return False
+    else:
+        return True
+
+
 def main():
     try:
         if sys.argv[1] == "-s":
@@ -236,20 +253,25 @@ def main():
                           farben_initialisieren(CONFIG["led"]["mapping"]["feuchte_anzeige"]))
     if not simulationsmodus:
         exc = False
+        led_auszeiten = led_auszeiten_generieren(CONFIG["led"]["aus_zeiten"])
         while True:
             now = datetime.datetime.now()
-            if (int(now.strftime("%M")) - 1) % 5 == 0:
-                if not exc:
-                    temp = Messwert()
-                    feuchte = Messwert()
-                    us_units_auslesen(temp, feuchte)
-                    temp_ampel.set_status(temp_differenz(temp))
-                    feuchte_ampel.set_status(feuchte_differenz(temp, feuchte))
-                    del temp, feuchte
-                    exc = True
+            if led_auszeiten_pruefen(led_auszeiten, now):
+                if (int(now.strftime("%M")) - 1) % 5 == 0:
+                    if not exc:
+                        temp = Messwert()
+                        feuchte = Messwert()
+                        us_units_auslesen(temp, feuchte)
+                        temp_ampel.set_status(temp_differenz(temp))
+                        feuchte_ampel.set_status(feuchte_differenz(temp, feuchte))
+                        del temp, feuchte
+                        exc = True
+                else:
+                    if exc:
+                        exc = False
             else:
-                if exc:
-                    exc = False
+                temp_ampel.rgbled.off()
+                feuchte_ampel.rgbled.off()
             time.sleep(25)
     else:
         while True:
