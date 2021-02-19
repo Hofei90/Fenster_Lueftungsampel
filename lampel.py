@@ -31,18 +31,28 @@ class Ampel:
         self.hysterese = hysterese
         self.farben = farben
         self.start_test()
-        
+
     def set_status(self, differenz):
         status = self.status_ermitteln(differenz)
-        if status < self.status:
-            status = self.status_ermitteln(differenz, self.hysterese)
-        if status != self.status:
-            LOGGER.debug(f"Statusänderung von {self.status} auf {status}")
-            self.status = status
-            self._set_rgbled()
+        if status is not None:
+            if self.status is None:
+                self.status = 0
+            if status < self.status:
+                status = self.status_ermitteln(differenz, self.hysterese)
+            if status != self.status:
+                LOGGER.debug(f"Statusänderung von {self.status} auf {status}")
+                self.status = status
+                self._set_rgbled()
+        else:
+            if status is not self.status:
+                LOGGER.debug(f"Statusänderung von {self.status} auf {status}")
+                self.status = status
+                self._set_rgbled()
 
     def _set_rgbled(self):
-        if self.status == 0:
+        if self.status is None:
+            self.rgbled.color = self.farben["no_data"]
+        elif self.status == 0:
             self.rgbled.color = self.farben["ok"]
             LOGGER.debug(f"RGB Farbe Ok: {self.rgbled.color.rgb}")
         elif self.status == 1:
@@ -53,7 +63,9 @@ class Ampel:
             LOGGER.debug(f"RGB Farbe Kritisch: {self.rgbled.color.rgb}")
 
     def status_ermitteln(self, differenz, hysterese=0):
-        if differenz <= self.differenz_ok - hysterese:
+        if differenz is None:
+            return None
+        elif differenz <= self.differenz_ok - hysterese:
             status = 0
         elif differenz <= self.differenz_warnung - hysterese:
             status = 1
@@ -129,14 +141,14 @@ def farben_initialisieren(led_nr):
 
 
 def us_units_auslesen(temp, feuchte):
-    us_units = db.Archive.select(db.Archive.us_units)\
+    us_units = db.Archive.select(db.Archive.us_units) \
         .order_by(db.Archive.date_time.desc()).limit(1).scalar()
     temp.set_us_unit(us_units)
     feuchte.set_us_unit(us_units)
 
 
 def temp_auslesen(spalte, us_units):
-    temp = db.Archive.select(temp_mapping(spalte))\
+    temp = db.Archive.select(temp_mapping(spalte)) \
         .order_by(db.Archive.date_time.desc()).limit(1).scalar()
     if us_units:
         temp = mwu.temperaturumrechner(temp)
@@ -144,7 +156,7 @@ def temp_auslesen(spalte, us_units):
 
 
 def feuchte_auslesen(spalte):
-    feuchte = db.Archive.select(feuchte_mapping(spalte))\
+    feuchte = db.Archive.select(feuchte_mapping(spalte)) \
         .order_by(db.Archive.date_time.desc()).limit(1).scalar()
     return feuchte
 
@@ -154,7 +166,10 @@ def sim_daten_schreiben(datadict):
 
 
 def differenz_berechnen(aussen, innen):
-    differenz = aussen - innen
+    try:
+        differenz = aussen - innen
+    except TypeError:
+        differenz = None
     return differenz
 
 
@@ -286,3 +301,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+test

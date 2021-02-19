@@ -37,11 +37,13 @@ aus_zeiten = [["18:00", "20:00"], ["8:00", "2:00"]]
     ok = [0.0, 1.0, 0.0]
     warnung = [0.0, 0.0, 1.0]
     kritisch = [1.0, 0.0, 0.0]
+    no_data = [1.0, 1.0, 1.0]
 
     [led.2.farben]
     ok = [0.0, 1.0, 0.0]
     warnung = [0.0, 0.0, 1.0]
     kritisch = [1.0, 0.0, 0.0]
+    no_data = [1.0, 1.0, 1.0]
 
     [led.mapping]
     # Eintragen der Zuständigen RGB LED
@@ -66,10 +68,3 @@ feuchte_aussen = "out_humidity"
     ok = -0.5 # bis
     warnung = 0.5
     hysterese = 0.2 # Zählt nur nach unten
-
-
-
-
-
-
-
